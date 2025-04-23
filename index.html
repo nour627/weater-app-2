@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weather</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
+        integrity="sha384-oBqDVmMz4fnFO9gybMw7xBP9JdP7y33D5rLZ5n5sQd1+OjxSuX1/hkQqI2A+gR" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"
+        integrity="sha384-pzjw8f+ua7Kw1TIq0Chz6Dw5k6ndFHYfLxoH91CPQzCZl/q+qAt9jFZ3Bnl0y7t" crossorigin="anonymous"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+
+    <link rel="stylesheet" href="./css/main.css" />
+    <link rel="stylesheet" href="./css/all.min.css" />
+    <style>
+        /* Basic styling for the modals */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d5d8d5;
+            border-radius: 20px;
+            box-sizing: border-box;
+        }
+
+        .form-group button {
+            background-color: #009AD8;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .form-group button:hover {
+            opacity: 0.8;
+        }
+
+        .modal-footer {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .modal-footer a {
+            color: #009AD8;
+            text-decoration: none;
+        }
+
+        .modal-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Style for the navigation links to look like the active Home button */
+        .navbar-links ul a li.nav-button {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 20px; /* Adjust for desired roundness */
+            border: 2px solid transparent; /* Initially transparent */
+            transition: border-color 0.3s ease;
+        }
+
+        .navbar-links ul a li.nav-button:hover {
+            border-color: #009AD8; /* Add border on hover */
+        }
+
+        .navbar-links ul a li.active-link,
+        .navbar-links ul a li.active-link:hover {
+            background-color: #009AD8;
+            border-color: #009AD8;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeLoginModal">&times;</span>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email:</label>
+                    <input type="email" id="loginEmail" name="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password:</label>
+                    <input type="password" id="loginPassword" name="loginPassword" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" style="border-radius: 20px; padding: 10px 20px;">Login</button>
+                </div>
+            </form>
+            <div class="modal-footer">
+                Don't have an account? <a href="#" id="openSignupModalLink">Sign up</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeSignupModal">&times;</span>
+            <h2>Sign Up</h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signupUsername">Username:</label>
+                    <input type="text" id="signupUsername" name="signupUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupEmail">Email:</label>
+                    <input type="email" id="signupEmail" name="signupEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password:</label>
+                    <input type="password" id="signupPassword" name="signupPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password:</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" style="border-radius: 20px; padding: 10px 20px;">Sign Up</button>
+                </div>
+            </form>
+            <div class="modal-footer">
+                Already have an account? <a href="#" id="openLoginModalLink">Login</a>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar p-4" style="background-color: #1E202B;">
+        <div class="container d-flex justify-content-between">
+
+            <div class="logo"><a class="navbar-brand d-flex justify-content-center align-content-center" href="#">
+                    <img src="./img/logo@2x.png" alt="logo" width="65" height="40">
+                    <div class="logo-info ms-3">
+                        <h5 class="fs-6 fw-bold" style="color: white;">Weather</h5>
+                    </div>
+                </a></div>
+
+            <div class="navbar-links">
+                <ul class="d-flex justify-content-between gap-5 list-unstyled">
+                    <a href="#" id="userGreeting">
+                        <li class="nav-button rounded-pill">Welcome</li>
+                    </a>
+                    <a href="/logout" id="logoutBtn">
+                        <li class="nav-button rounded-pill">Logout</li>
+                    </a>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="cover-pic">
+        <div class="inbut-bar d-flex justify-content-center position-relative">
+            <input type="text" class="form-control w-75 p-3"
+                style="background-color: #1E202B;   border-radius: 30px; border: none; color: white;"
+                placeholder="Find your location..." id="find">
+            <button class="btn text-white px-4   my-2 position-relative"
+                style="border-radius: 30px; background-color: #009AD8; width: 90px; height: 40px;">Find</button>
+        </div>
+    </div>
+
+    <div style="background-color: #1E202B; height: 250px;">
+        <div class="weather d-flex position-relative justify-content-center">
+            <div class=" w-25 " id="day1">
+            </div>
+            <div class=" w-25 text-center" id="day2">
+            </div>
+            <div class=" w-25 text-center" id="day3">
+            </div>
+        </div>
+    </div>
+
+
+    <footer style="background-color: #262936;" class="p-5">
+        <div class="container">
+            <div class="row">
+                <div class=" col-md-8">
+                </div>
+                <div class="col-md-4">
+                    <ul class="icons d-flex gap-3 list-unstyled">
+                        <li><i class="fab fa-facebook-f fa-2x rounded-circle btn mr-2"></i></li>
+                        <li><i class="fab fa-twitter fa-2x rounded-circle btn mr-2"></i></li>
+                        <li><i class="fab fa-google-plus-g fa-2x rounded-circle btn mr-2"></i></li>
+                        <li><i class="fab fa-pinterest fa-2x rounded-circle btn mr-2"></i></li>
+                    </ul>
+
+                </div>
+            </div>
+          
+        </div>
+    </footer>
+
+    <script>
+        // Add this at the beginning of your JavaScript, after body is loaded
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/api/auth/status');
+                const data = await response.json();
+                
+                if (data.authenticated) {
+                    // Update the greeting with the username
+                    document.getElementById('userGreeting').innerHTML = `<li class="nav-button rounded-pill">Welcome, ${data.username}</li>`;
+                } else {
+                    // Redirect to login if not authenticated (this should be handled by server but as a backup)
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error('Error checking auth status:', error);
+            }
+        });
+        
+        // Get the modal elements
+        const loginModal = document.getElementById("loginModal");
+        const signupModal = document.getElementById("signupModal");
+
+        // Get the buttons that open the modals (now list items)
+        const openLoginModalButton = document.getElementById("openLoginModal");
+        const openSignupModalButton = document.getElementById("openSignupModal");
+
+        // Get the close buttons
+        const closeLoginModalButton = document.getElementById("closeLoginModal");
+        const closeSignupModalButton = document.getElementById("closeSignupModal");
+
+        // Get the links to switch between modals
+        const openSignupModalLink = document.getElementById("openSignupModalLink");
+        const openLoginModalLink = document.getElementById("openLoginModalLink");
+
+        // Event listeners to open the modals
+        openLoginModalButton.addEventListener("click", (e) => {
+            e.preventDefault(); // Prevent default link behavior
+            loginModal.style.display = "block";
+        });
+
+        openSignupModalButton.addEventListener("click", (e) => {
+            e.preventDefault(); // Prevent default link behavior
+            signupModal.style.display = "block";
+        });
+
+        // Event listeners to close the modals
+        closeLoginModalButton.addEventListener("click", () => {
+            loginModal.style.display = "none";
+        });
+
+        closeSignupModalButton.addEventListener("click", () => {
+            signupModal.style.display = "none";
+        });
+
+        // Event listeners to switch between modals
+        openSignupModalLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            loginModal.style.display = "none";
+            signupModal.style.display = "block";
+        });
+
+        openLoginModalLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            signupModal.style.display = "none";
+            loginModal.style.display = "block";
+        });
+
+        // Close modal if user clicks outside the modal
+        window.addEventListener("click", (event) => {
+            if (event.target == loginModal) {
+                loginModal.style.display = "none";
+            }
+            if (event.target == signupModal) {
+                signupModal.style.display = "none";
+            }
+        });
+
+        // You would add your actual login and signup logic using JavaScript
+        // to handle form submissions and interact with a backend service.
+        document.getElementById("loginForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            // Add your login logic here (e.g., sending data to a server)
+            console.log("Login form submitted");
+            loginModal.style.display = "none"; // Close the modal after submission (you might want to do this on success)
+        });
+
+        document.getElementById("signupForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const password = document.getElementById("signupPassword").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+            if (password !== confirmPassword) {
+                alert("Passwords do not match!");
+                return;
+            }
+            // Add your signup logic here (e.g., sending data to a server)
+            console.log("Signup form submitted");
+            signupModal.style.display = "none"; // Close the modal after submission (you might want to do this on success)
+        });
+    </script>
+
+    <script src="./js/index.js"></script>
+</body>
+
+</html>

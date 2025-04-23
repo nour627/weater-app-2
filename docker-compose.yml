@@ -1,0 +1,31 @@
+version: '3.3'
+
+services:
+  weather-app:
+    build: .
+    container_name: weather-app
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/weather-app
+    depends_on:
+      - mongodb
+    networks:
+      - weather-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongodb_data:/data/db
+    networks:
+      - weather-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  weather-network:
+    driver: bridge 
