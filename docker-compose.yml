@@ -23,7 +23,6 @@ services:
     networks:
       - weather-network
 
-volumes:
   mongodb_data:
 
 networks:
