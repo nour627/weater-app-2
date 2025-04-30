@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather History - Weather App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            background-color: #1e202b;
+            color: #bfc1c8;
+            font-family: 'Arial', sans-serif;
+        }
+        .history-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #262936;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+        .history-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .history-item {
+            background-color: #323544;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .favorite-btn {
+            background: none;
+            border: none;
+            color: #bfc1c8;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .favorite-btn.active {
+            color: #ffd700;
+        }
+        .favorite-btn:hover {
+            color: #ffd700;
+        }
+        .empty-history {
+            text-align: center;
+            padding: 2rem;
+            color: #bfc1c8;
+        }
+        .nav-link {
+            color: #bfc1c8;
+            text-decoration: none;
+            margin: 0 1rem;
+        }
+        .nav-link:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #262936;">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="./img/logo@2x.png" alt="Weather App Logo" height="30">
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Home</a>
+                <a class="nav-link active" href="/history.html">History</a>
+                <a class="nav-link" href="/logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="history-container">
+        <div class="history-header">
+            <h2>Weather Search History</h2>
+            <p>Your recent weather searches and favorite locations</p>
+        </div>
+        <div id="historyList">
+            <!-- History items will be populated here -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Check authentication
+                const authResponse = await fetch('/api/auth/status');
+                const authData = await authResponse.json();
+                
+                if (!authData.authenticated) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                // Fetch weather history
+                const response = await fetch('/api/weather/history');
+                const history = await response.json();
+                
+                const historyList = document.getElementById('historyList');
+                
+                if (history.length === 0) {
+                    historyList.innerHTML = `
+                        <div class="empty-history">
+                            <i class="fas fa-history fa-3x mb-3"></i>
+                            <p>No search history yet</p>
+                            <a href="/" class="btn btn-primary">Search Weather</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                historyList.innerHTML = history.map(item => `
+                    <div class="history-item" style="flex-direction: column; align-items: stretch;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h5 style="text-transform: capitalize;">${item.location}</h5>
+                                <small>${new Date(item.searchDate).toLocaleString()}</small>
+                            </div>
+                            <button class="favorite-btn ${item.isFavorite ? 'active' : ''}" 
+                                    onclick="toggleFavorite('${item._id}')">
+                                <i class="fas fa-star"></i>
+                            </button>
+                        </div>
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem; justify-content: flex-start;">
+                            ${item.weather && item.weather.length ? item.weather.map(day => `
+                                <div style="background: #23263a; border-radius: 8px; padding: 1rem; min-width: 120px; text-align: center; color: #fff;">
+                                    <div style="font-size: 0.95rem; color: #bfc1c8; margin-bottom: 0.5rem;">${new Date(day.date).toLocaleDateString()}</div>
+                                    <img src="https:${day.condition_icon}" alt="icon" style="width: 40px; height: 40px;">
+                                    <div style="font-size: 1.5rem; font-weight: bold; margin: 0.5rem 0;">${day.temp_c}&deg;C</div>
+                                    <div style="font-size: 0.9rem; color: #bfc1c8;">Min: ${day.min_temp_c}&deg;C</div>
+                                    <div style="font-size: 0.9rem; color: #bfc1c8;">Max: ${day.max_temp_c}&deg;C</div>
+                                    <div style="font-size: 0.9rem; color: #bfc1c8;">Wind: ${day.wind_kph} km/h</div>
+                                    <div style="font-size: 0.95rem; color: #009AD8; margin-top: 0.3rem;">${day.condition_text}</div>
+                                </div>
+                            `).join('') : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        async function toggleFavorite(id) {
+            try {
+                const response = await fetch(`/api/weather/favorite/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    // Refresh the page to show updated favorite status
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Error toggling favorite:', error);
+            }
+        }
+    </script>
+</body>
+</html> 

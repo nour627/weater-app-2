@@ -21,6 +21,37 @@ async function getData(city) {
     var response = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=0d39cf0e8b25456bac2105848242611&q=${city}&days=7`);
     var data = await response.json();
     display(data);
+    
+    // Prepare weather data for 3 days
+    const weather = [0, 1, 2].map(i => {
+      const day = data.forecast.forecastday[i];
+      return {
+        date: day.date,
+        temp_c: i === 0 ? data.current.temp_c : day.day.maxtemp_c,
+        min_temp_c: day.day.mintemp_c,
+        max_temp_c: day.day.maxtemp_c,
+        wind_kph: i === 0 ? data.current.wind_kph : day.day.maxwind_kph,
+        condition_text: i === 0 ? data.current.condition.text : day.day.condition.text,
+        condition_icon: i === 0 ? data.current.condition.icon : day.day.condition.icon
+      };
+    });
+    
+    // Save to search history
+    try {
+      const historyResponse = await fetch('/api/weather/history', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ location: city, weather })
+      });
+      
+      if (!historyResponse.ok) {
+        console.error('Failed to save to history:', await historyResponse.text());
+      }
+    } catch (error) {
+      console.error('Error saving to history:', error);
+    }
   } catch (error) {
     console.error('Error fetching data:', error);
   }

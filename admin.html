@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Weather App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1E202B;
+            color: white;
+        }
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .user-table {
+            background-color: #262936;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .table {
+            color: white;
+        }
+        .table thead th {
+            border-bottom: 2px solid #009AD8;
+            color: #009AD8;
+        }
+        .btn-admin {
+            background-color: #009AD8;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 15px;
+        }
+        .btn-admin:hover {
+            background-color: #0085bb;
+            color: white;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            border-radius: 20px;
+        }
+        .alert {
+            display: none;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar p-4" style="background-color: #1E202B;">
+        <div class="container d-flex justify-content-between">
+            <div class="logo">
+                <a class="navbar-brand d-flex justify-content-center align-content-center" href="/">
+                    <img src="./img/logo@2x.png" alt="logo" width="65" height="40">
+                    <div class="logo-info ms-3">
+                        <h5 class="fs-6 fw-bold" style="color: white;">Weather Admin</h5>
+                    </div>
+                </a>
+            </div>
+            <div class="navbar-links">
+                <ul class="d-flex justify-content-between gap-5 list-unstyled">
+                    <a href="/" id="userGreeting">
+                        <li class="nav-button rounded-pill">Welcome</li>
+                    </a>
+                    <a href="/logout" id="logoutBtn">
+                        <li class="nav-button rounded-pill">Logout</li>
+                    </a>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="admin-container">
+        <div class="admin-header">
+            <h2>User Management</h2>
+            <button class="btn btn-admin" id="createUserBtn">Create New User</button>
+        </div>
+
+        <div class="alert alert-success" id="success-message" role="alert"></div>
+        <div class="alert alert-danger" id="error-message" role="alert"></div>
+
+        <div class="user-table">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersList">
+                    <!-- Users will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Create User Modal -->
+    <div class="modal fade" id="createUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background-color: #262936; color: white;">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createUserForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <select class="form-control" id="role">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-admin" id="submitCreateUser">Create User</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Check if user is admin
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/api/auth/status');
+                const data = await response.json();
+                
+                if (!data.authenticated || data.role !== 'admin') {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                document.getElementById('userGreeting').innerHTML = 
+                    `<li class="nav-button rounded-pill">Welcome, ${data.username}</li>`;
+                
+                loadUsers();
+            } catch (error) {
+                console.error('Error checking auth status:', error);
+                window.location.href = '/login.html';
+            }
+        });
+
+        // Load users
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/users');
+                const users = await response.json();
+                
+                const usersList = document.getElementById('usersList');
+                usersList.innerHTML = '';
+                
+                users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${user.username}</td>
+                        <td>${user.email}</td>
+                        <td>${user.role}</td>
+                        <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="deleteUser('${user._id}')">
+                                Delete
+                            </button>
+                        </td>
+                    `;
+                    usersList.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showError('Error loading users');
+            }
+        }
+
+        // Delete user
+        async function deleteUser(userId) {
+            if (!confirm('Are you sure you want to delete this user?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/users/${userId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showSuccess('User deleted successfully');
+                    loadUsers();
+                } else {
+                    const data = await response.json();
+                    showError(data.message || 'Error deleting user');
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showError('Error deleting user');
+            }
+        }
+
+        // Create user
+        document.getElementById('createUserBtn').addEventListener('click', () => {
+            const modal = new bootstrap.Modal(document.getElementById('createUserModal'));
+            modal.show();
+        });
+
+        document.getElementById('submitCreateUser').addEventListener('click', async () => {
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+
+            try {
+                const response = await fetch('/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, email, password, role })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('User created successfully');
+                    bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
+                    document.getElementById('createUserForm').reset();
+                    loadUsers();
+                } else {
+                    showError(data.message || 'Error creating user');
+                }
+            } catch (error) {
+                console.error('Error creating user:', error);
+                showError('Error creating user');
+            }
+        });
+
+        // Show success message
+        function showSuccess(message) {
+            const successMessage = document.getElementById('success-message');
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 3000);
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 

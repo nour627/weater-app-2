@@ -10,7 +10,10 @@ const app = express();
 const PORT = 3000;
 const SALT_ROUNDS = 10; // Number of salt rounds (higher is more secure but slower) 
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://skycastlive.online',
+  credentials: true
+}));
 app.use(bodyParser.json());
 
 // Add session middleware
@@ -29,7 +32,15 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://mongodb:27017/weather-app')
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error: ', err));
 
-// Authentication middleware
+// Authorization middleware
+const isAdmin = (req, res, next) => {
+  if (req.session && req.session.userId && req.session.role === 'admin') {
+    return next();
+  }
+  res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+};
+
+// Modify the authentication middleware to include role
 const isAuthenticated = (req, res, next) => {
   if (req.session && req.session.userId) {
     return next();
@@ -60,18 +71,30 @@ app.get('/', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
+// History page route
+app.get('/history.html', isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'history.html'));
+});
+
+// Admin page route
+app.get('/admin.html', isAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'admin.html'));
+});
+
 // User Schema (as before)
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true }, // Store the HASHED password
+  password: { type: String, required: true },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' }, // Add role field
+  createdAt: { type: Date, default: Date.now }
 });
 
 const User = mongoose.model('User', UserSchema);
 
-// Signup Route (Modified to hash password)
+// Modify signup route to only allow admin to create admin users
 app.post('/signup', async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, role } = req.body;
 
   if (!username || !email || !password) {
     return res.status(400).json({ message: 'All fields are required' });
@@ -85,24 +108,35 @@ app.post('/signup', async (req, res) => {
       return res.status(409).json({ message: 'Username or email already exists' });
     }
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    // Only allow admin role if the request comes from an admin
+    const userRole = (req.session && req.session.role === 'admin' && role === 'admin') ? 'admin' : 'user';
 
-    const newUser = new User({ username, email, password: hashedPassword }); // Store the HASH
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    const newUser = new User({ 
+      username, 
+      email, 
+      password: hashedPassword,
+      role: userRole 
+    });
+    
     await newUser.save();
     
-    // Set session after successful signup
     req.session.userId = newUser._id;
     req.session.username = newUser.username;
+    req.session.role = newUser.role;
     
-    res.status(201).json({ message: 'Signup successful', redirect: '/' });
+    res.status(201).json({ 
+      message: 'Signup successful', 
+      redirect: '/',
+      role: newUser.role 
+    });
   } catch (error) {
     console.error('Signup error:', error);
     res.status(500).json({ message: 'Signup failed' });
   }
 });
 
-// Login Route (Modified for password verification)
+// Modify login route to include role
 app.post('/login', async (req, res) => {
   const { loginEmail, loginPassword } = req.body;
 
@@ -114,22 +148,23 @@ app.post('/login', async (req, res) => {
     const user = await User.findOne({ $or: [{ email: loginEmail }, { username: loginEmail }] });
       
     if (user) {
-      // Compare the entered password with the stored hash
       const passwordMatch = await bcrypt.compare(loginPassword, user.password);
 
       if (passwordMatch) {
-        // Set session data
+        // Set session data including role
         req.session.userId = user._id;
         req.session.username = user.username;
+        req.session.role = user.role;
         
-        // Return successful login with redirect info
-        res.status(200).json({ message: 'Login successful', redirect: '/' });
+        res.status(200).json({ 
+          message: 'Login successful', 
+          redirect: '/',
+          role: user.role 
+        });
       } else {
-        // Passwords do not match
         res.status(401).json({ message: 'Invalid credentials' });
       }
     } else {
-      // User not found
       res.status(401).json({ message: 'Invalid credentials' });
     }
   } catch (error) {
@@ -148,18 +183,113 @@ app.get('/logout', (req, res) => {
   });
 });
 
-// API route to check authentication status
+// Modify auth status route to include role
 app.get('/api/auth/status', (req, res) => {
   if (req.session && req.session.userId) {
     return res.json({ 
       authenticated: true,
-      username: req.session.username
+      username: req.session.username,
+      role: req.session.role
     });
   }
   res.json({ authenticated: false });
 });
 
+// Weather History Schema
+const WeatherHistorySchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  location: { type: String, required: true },
+  searchDate: { type: Date, default: Date.now },
+  isFavorite: { type: Boolean, default: false },
+  weather: [
+    {
+      date: String,
+      temp_c: Number,
+      min_temp_c: Number,
+      max_temp_c: Number,
+      wind_kph: Number,
+      condition_text: String,
+      condition_icon: String
+    }
+  ]
+});
+
+const WeatherHistory = mongoose.model('WeatherHistory', WeatherHistorySchema);
+
+// Save weather search history
+app.post('/api/weather/history', isAuthenticated, async (req, res) => {
+  try {
+    const { location, weather } = req.body;
+    const newHistory = new WeatherHistory({
+      userId: req.session.userId,
+      location: location,
+      weather: weather
+    });
+    await newHistory.save();
+    res.status(201).json({ message: 'Search history saved' });
+  } catch (error) {
+    console.error('Error saving weather history:', error);
+    res.status(500).json({ message: 'Failed to save search history' });
+  }
+});
+
+// Get user's weather history
+app.get('/api/weather/history', isAuthenticated, async (req, res) => {
+  try {
+    const history = await WeatherHistory.find({ userId: req.session.userId })
+      .sort({ searchDate: -1 })
+      .limit(10);
+    res.json(history);
+  } catch (error) {
+    console.error('Error fetching weather history:', error);
+    res.status(500).json({ message: 'Failed to fetch search history' });
+  }
+});
+
+// Toggle favorite status for a location
+app.put('/api/weather/favorite/:id', isAuthenticated, async (req, res) => {
+  try {
+    const history = await WeatherHistory.findOne({
+      _id: req.params.id,
+      userId: req.session.userId
+    });
+    
+    if (!history) {
+      return res.status(404).json({ message: 'Search history not found' });
+    }
+    
+    history.isFavorite = !history.isFavorite;
+    await history.save();
+    res.json({ message: 'Favorite status updated', isFavorite: history.isFavorite });
+  } catch (error) {
+    console.error('Error updating favorite status:', error);
+    res.status(500).json({ message: 'Failed to update favorite status' });
+  }
+});
+
+// Add admin-only routes
+app.get('/api/users', isAdmin, async (req, res) => {
+  try {
+    const users = await User.find({}, { password: 0 }); // Exclude password field
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+});
+
+app.delete('/api/users/:id', isAdmin, async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting user' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`Server running at https://skycastlive.online`);
 });

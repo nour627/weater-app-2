@@ -195,8 +195,17 @@
 
             <div class="navbar-links">
                 <ul class="d-flex justify-content-between gap-5 list-unstyled">
-                    <a href="#" id="userGreeting">
+                    <a href="/" id="userGreeting">
                         <li class="nav-button rounded-pill">Welcome</li>
+                    </a>
+                    <a href="/history.html">
+                        <li class="nav-button rounded-pill">History</li>
+                    </a>
+                    <a href="/map.html">
+                        <li class="nav-button rounded-pill">Map</li>
+                    </a>
+                    <a href="/admin.html" id="adminLink" style="display: none;">
+                        <li class="nav-button rounded-pill">Admin Panel</li>
                     </a>
                     <a href="/logout" id="logoutBtn">
                         <li class="nav-button rounded-pill">Logout</li>
@@ -257,8 +266,13 @@
                 if (data.authenticated) {
                     // Update the greeting with the username
                     document.getElementById('userGreeting').innerHTML = `<li class="nav-button rounded-pill">Welcome, ${data.username}</li>`;
+                    
+                    // Show admin link if user is admin
+                    if (data.role === 'admin') {
+                        document.getElementById('adminLink').style.display = 'block';
+                    }
                 } else {
-                    // Redirect to login if not authenticated (this should be handled by server but as a backup)
+                    // Redirect to login if not authenticated
                     window.location.href = '/login.html';
                 }
             } catch (error) {
