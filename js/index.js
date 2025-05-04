@@ -2,19 +2,32 @@ var find = document.getElementById('find');
 var day1 = document.getElementById('day1');
 var day2 = document.getElementById('day2');
 var day3 = document.getElementById('day3');
-
+var findButton = document.querySelector('.inbut-bar button');
 
 // Days of the week and months
 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+// Load default city (Cairo) on page load
 (function () {
   getData('cairo')
 })();
 
-find.addEventListener('input', function () {
-  getData(find.value)
-})
+// Remove the input event listener and add click event listener to the button
+findButton.addEventListener('click', function () {
+  if (find.value.trim() !== '') {
+    getData(find.value.trim());
+  } else {
+    alert('Please enter a location');
+  }
+});
+
+// Add Enter key support
+find.addEventListener('keypress', function (e) {
+  if (e.key === 'Enter' && find.value.trim() !== '') {
+    getData(find.value.trim());
+  }
+});
 
 async function getData(city) {
   try {

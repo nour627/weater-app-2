@@ -124,6 +124,37 @@
             border-color: #009AD8;
             color: white;
         }
+
+        /* Mobile menu styles */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .navbar-links {
+                display: none;
+                width: 100%;
+            }
+
+            .navbar-links.active {
+                display: block;
+            }
+
+            .navbar-links ul {
+                flex-direction: column;
+                align-items: center;
+                padding: 1rem 0;
+            }
+        }
     </style>
 </head>
 
@@ -184,32 +215,21 @@
     </div>
 
     <nav class="navbar p-4" style="background-color: #1E202B;">
-        <div class="container d-flex justify-content-between">
-
-            <div class="logo"><a class="navbar-brand d-flex justify-content-center align-content-center" href="#">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="logo">
+                <a class="navbar-brand" href="/">
                     <img src="./img/logo@2x.png" alt="logo" width="65" height="40">
-                    <div class="logo-info ms-3">
-                        <h5 class="fs-6 fw-bold" style="color: white;">Weather</h5>
-                    </div>
-                </a></div>
-
+                </a>
+            </div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
             <div class="navbar-links">
                 <ul class="d-flex justify-content-between gap-5 list-unstyled">
-                    <a href="/" id="userGreeting">
-                        <li class="nav-button rounded-pill">Welcome</li>
-                    </a>
-                    <a href="/history.html">
-                        <li class="nav-button rounded-pill">History</li>
-                    </a>
-                    <a href="/map.html">
-                        <li class="nav-button rounded-pill">Map</li>
-                    </a>
-                    <a href="/admin.html" id="adminLink" style="display: none;">
-                        <li class="nav-button rounded-pill">Admin Panel</li>
-                    </a>
-                    <a href="/logout" id="logoutBtn">
-                        <li class="nav-button rounded-pill">Logout</li>
-                    </a>
+                    <a href="/"><li class="nav-button rounded-pill">Home</li></a>
+                    <a href="/history.html"><li class="nav-button rounded-pill">History</li></a>
+                    <a href="/map.html"><li class="nav-button rounded-pill">Map</li></a>
+                    <a href="/logout"><li class="nav-button rounded-pill">Logout</li></a>
                 </ul>
             </div>
         </div>
@@ -217,22 +237,19 @@
 
     <div class="cover-pic">
         <div class="inbut-bar d-flex justify-content-center position-relative">
-            <input type="text" class="form-control w-75 p-3"
-                style="background-color: #1E202B;   border-radius: 30px; border: none; color: white;"
+            <input type="text" class="form-control p-3"
+                style="background-color: #1E202B; border-radius: 30px; border: none; color: white;"
                 placeholder="Find your location..." id="find">
-            <button class="btn text-white px-4   my-2 position-relative"
-                style="border-radius: 30px; background-color: #009AD8; width: 90px; height: 40px;">Find</button>
+            <button class="btn text-white px-4 my-2 position-relative"
+                style="border-radius: 30px; background-color: #009AD8;">Find</button>
         </div>
     </div>
 
-    <div style="background-color: #1E202B; height: 250px;">
+    <div style="background-color: #1E202B; min-height: 250px;">
         <div class="weather d-flex position-relative justify-content-center">
-            <div class=" w-25 " id="day1">
-            </div>
-            <div class=" w-25 text-center" id="day2">
-            </div>
-            <div class=" w-25 text-center" id="day3">
-            </div>
+            <div class="weather-card" id="day1"></div>
+            <div class="weather-card" id="day2"></div>
+            <div class="weather-card" id="day3"></div>
         </div>
     </div>
 
@@ -359,6 +376,11 @@
             // Add your signup logic here (e.g., sending data to a server)
             console.log("Signup form submitted");
             signupModal.style.display = "none"; // Close the modal after submission (you might want to do this on success)
+        });
+
+        // Add mobile menu toggle functionality
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            document.querySelector('.navbar-links').classList.toggle('active');
         });
     </script>
 

@@ -77,3 +77,124 @@ top: 30%;
     right: 30px;
 }
 
+/* Responsive styles */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 1rem !important;
+    }
+
+    .navbar-links {
+        display: none;
+        width: 100%;
+        background: #1E202B;
+        position: absolute;
+        top: 56px; /* or your navbar height */
+        left: 0;
+        z-index: 100;
+    }
+    .navbar-links.active {
+        display: block;
+    }
+    .navbar-links ul {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 0;
+    }
+
+    .navbar-links {
+        margin-top: 1rem;
+    }
+
+    .logo {
+        text-align: center;
+    }
+
+    .cover-pic {
+        height: 250px;
+    }
+
+    .inbut-bar {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .inbut-bar input {
+        width: 90% !important;
+    }
+
+    .inbut-bar button {
+        position: static !important;
+        width: 90% !important;
+    }
+
+    .weather {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        bottom: 0;
+        right: 0;
+        padding: 1rem;
+    }
+
+    .weather > div {
+        width: 100% !important;
+        margin-bottom: 1rem;
+    }
+
+    footer {
+        padding: 2rem 1rem !important;
+    }
+
+    .icons {
+        justify-content: center !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .modal-content {
+        width: 95% !important;
+        margin: 10% auto !important;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="password"] {
+        width: 100%;
+    }
+}
+
+/* Additional responsive utilities */
+.container {
+    max-width: 100%;
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+@media (min-width: 576px) {
+    .container {
+        max-width: 540px;
+    }
+}
+
+@media (min-width: 768px) {
+    .container {
+        max-width: 720px;
+    }
+}
+
+@media (min-width: 992px) {
+    .container {
+        max-width: 960px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1140px;
+    }
+}
+
